@@ -12,21 +12,19 @@ type Point struct {
 }
 
 func main() {
-	data := make([]Point, 1000000)
+	data := make([]Point, 5)
 	const k int = 3
-	seededData, centroid := seedData(data, 1000000, k)
+	seededData, centroid := seedData(data, 5, k)
 	cluster := initialCluster(seededData, k, centroid)
-	i := 0
 	for {
 		newCluster := (clusterCalculation(cluster))
 		// fmt.Println(newCluster)
-		i++
 		if equalClusters(newCluster, cluster) {
 			break
 		}
 		cluster = newCluster
 	}
-	fmt.Println(i)
+	fmt.Println(len(cluster))
 	printCluster(cluster)
 }
 func seedData(data []Point, totaldata int, k int) ([]Point, []Point) {
@@ -35,8 +33,8 @@ func seedData(data []Point, totaldata int, k int) ([]Point, []Point) {
 		data[i].X = rand.Float64() * 10
 		data[i].Y = rand.Float64() * 10
 		if i < k {
-			centroid[i].X = float64(i)
-			centroid[i].Y = float64(i)
+			centroid[i].X = float64(data[i].X)
+			centroid[i].Y = float64(data[i].Y)
 		}
 	}
 	return data, centroid
@@ -113,9 +111,9 @@ func equalClusters(a, b [][]Point) bool {
 	return true
 }
 func printCluster(finalCluster [][]Point) {
-	grid := make([][]rune, 10)
+	grid := make([][]rune, 12)
 	for i := range grid {
-		grid[i] = make([]rune, 10)
+		grid[i] = make([]rune, 12)
 		for j := range grid[i] {
 			grid[i][j] = '.'
 		}
@@ -123,9 +121,9 @@ func printCluster(finalCluster [][]Point) {
 	sym := [3]rune{'o', '*', '#'}
 	for i, outer := range finalCluster {
 		for _, inner := range outer {
-			x := int(inner.X)
-			y := int(inner.Y)
-			grid[x][y] = sym[i]
+			x := int(math.Round(inner.X))
+			y := int(math.Round(inner.Y))
+			grid[y][x] = sym[i]
 		}
 	}
 	for _, outer := range grid {
