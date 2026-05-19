@@ -6,8 +6,13 @@ import (
 	"math/rand/v2"
 )
 
+type Point struct {
+	X float64
+	Y float64
+}
+
 func main() {
-	data := []float64{}
+	data := make([]Point, 1000000)
 	const k int = 3
 	seededData, centroid := seedData(data, 1000000, k)
 	cluster := initialCluster(seededData, k, centroid)
@@ -22,30 +27,33 @@ func main() {
 		cluster = newCluster
 	}
 	fmt.Println(i)
+	printCluster(cluster)
 }
-func seedData(data []float64, totaldata int, k int) ([]float64, []int) {
-	centroid := make([]int, k)
+func seedData(data []Point, totaldata int, k int) ([]Point, []Point) {
+	centroid := make([]Point, k)
 	for i := 0; i < totaldata; i++ {
-		data = append(data, rand.Float64()*10)
+		data[i].X = rand.Float64() * 10
+		data[i].Y = rand.Float64() * 10
 		if i < k {
-			centroid[i] = i
+			centroid[i].X = float64(i)
+			centroid[i].Y = float64(i)
 		}
 	}
 	return data, centroid
 }
-func initialCluster(seededData []float64, k int, centroid []int) [][]float64 {
+func initialCluster(seededData []Point, k int, centroid []Point) [][]Point {
 	n := len(seededData)
 	if n < k {
 		panic("The number of data should be more than the number of clusters")
 	}
-	clusters := make([][]float64, k)
+	clusters := make([][]Point, k)
 	for i := 0; i < len(seededData); i++ {
-		minDist := distance(seededData[i], seededData[centroid[0]])
+		minDist := distance(seededData[i], centroid[0])
 		minIndex := 0
-		for _, v := range centroid {
-			d := distance(seededData[i], seededData[v])
+		for j, v := range centroid {
+			d := distance(seededData[i], v)
 			if d < minDist {
-				minIndex = v
+				minIndex = j
 				minDist = d
 			}
 		}
@@ -53,14 +61,14 @@ func initialCluster(seededData []float64, k int, centroid []int) [][]float64 {
 	}
 	return clusters
 }
-func distance(x, y float64) float64 {
-	return math.Abs(x - y)
+func distance(a Point, b Point) float64 {
+	return math.Sqrt((a.X-b.X)*(a.X-b.X) + (a.Y-b.Y)*(a.Y-b.Y))
 }
-func clusterCalculation(cluster [][]float64) [][]float64 {
-	centroid := make([]float64, len(cluster))
-	newCluster := make([][]float64, len(cluster))
+func clusterCalculation(cluster [][]Point) [][]Point {
+	centroid := make([]Point, len(cluster))
+	newCluster := make([][]Point, len(cluster))
 	for i, v := range cluster {
-		centroid[i] = centroidCalc(v...)
+		centroid[i].X, centroid[i].Y = centroidCalc(v...)
 	}
 	for _, v := range cluster {
 		for _, subV := range v {
@@ -78,15 +86,17 @@ func clusterCalculation(cluster [][]float64) [][]float64 {
 	}
 	return newCluster
 }
-func centroidCalc(values ...float64) float64 {
+func centroidCalc(values ...Point) (float64, float64) {
 	n := len(values)
-	sum := 0.0
+	sumX := 0.0
+	sumY := 0.0
 	for i := 0; i < n; i++ {
-		sum += values[i]
+		sumX += values[i].X
+		sumY += values[i].Y
 	}
-	return sum / float64(n)
+	return sumX / float64(n), sumY / float64(n)
 }
-func equalClusters(a, b [][]float64) bool {
+func equalClusters(a, b [][]Point) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -101,4 +111,27 @@ func equalClusters(a, b [][]float64) bool {
 		}
 	}
 	return true
+}
+func printCluster(finalCluster [][]Point) {
+	grid := make([][]rune, 10)
+	for i := range grid {
+		grid[i] = make([]rune, 10)
+		for j := range grid[i] {
+			grid[i][j] = '.'
+		}
+	}
+	sym := [3]rune{'o', '*', '#'}
+	for i, outer := range finalCluster {
+		for _, inner := range outer {
+			x := int(inner.X)
+			y := int(inner.Y)
+			grid[x][y] = sym[i]
+		}
+	}
+	for _, outer := range grid {
+		for _, inner := range outer {
+			fmt.Printf("%c  ", inner)
+		}
+		fmt.Println("")
+	}
 }
